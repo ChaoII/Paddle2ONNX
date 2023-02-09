@@ -85,6 +85,12 @@ void ModelExporter::ExportOp(const PaddleParser& parser, OnnxHelper* helper,
   if (op.type() == "while") {
     return ExportLoop(parser, helper, opset_version, block_id, op_id, verbose);
   }
+//  if (op.type() == "conditional_block") {
+//    continue;
+//  }
+//  if (op.type() == "select_input") {
+//    return ExportIf(parser, helper, opset_version, block_id, op_id, verbose);
+//  }
 
   auto mapper = MapperHelper::Get()->CreateMapper(op.type(), parser, helper,
                                                   block_id, op_id);
@@ -461,7 +467,22 @@ int32_t ModelExporter::GetMinOpset(const PaddleParser& parser, bool verbose) {
       }
       converted_op_num += 1;
       int current_min_opset = 7;
-      if (op.type() == "while") {
+      if (op.type() == "conditional_block") {
+        auto outputs = parser.GetOpOutput(i, j, "Out");
+        if (outputs.size() > 0) {
+          P2OLogger(verbose) << "Only supports conditional_block with 1 output, but now it has " << outputs.size() << " outputs." << std::endl;
+          current_min_opset = -1;
+        } else { 
+          current_min_opset = 13;
+          auto iter = output_by_conditional_blocks_.find(outputs[0]);
+          if (iter != output_by_conditional_blocks_.end()) {
+            P2OLogger(verbose) << "The output '" << outputs[0] << "' is already exists, please check your model." << std::endl;
+            current_min_opset = -1;
+          }
+          output_by_conditional_blocks_[outputs[0]] = std::array<int, 2>({i, j});
+        }
+      }
+      else if (op.type() == "while") {
         P2OLogger() << "Detected there's control flow 'while' op in your "
                        "model, this requires the minimal opset version of 13."
                     << std::endl;

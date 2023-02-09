@@ -49,6 +49,9 @@ struct ModelExporter {
   int32_t _total_ops_num = 0;
   int32_t _current_exported_num = 0;
 
+  // The output records for conditional block
+  std::map<std::string, std::array<float, 2>> output_by_conditional_blocks_;
+
   void ExportParameters(const std::map<std::string, Weight>& params,
                         bool use_initializer = false);
 
@@ -65,6 +68,11 @@ struct ModelExporter {
                        const int64_t& op_id);
   void ExportLoop(const PaddleParser& parser, OnnxHelper* helper,
                   int32_t opset_version, int64_t block_id, int64_t op_id,
+                  bool verbose);
+//  bool IsIfSupported(const PaddleParser& parser, const int64_t& block_id,
+//                       const int64_t& op_id);
+//  void ExportIf(const PaddleParser& parser, OnnxHelper* helper,
+//                  int32_t opset_version, int64_t block_id, int64_t op_id,
                   bool verbose);
 
   ONNX_NAMESPACE::ModelProto Optimize(const ONNX_NAMESPACE::ModelProto& model);
